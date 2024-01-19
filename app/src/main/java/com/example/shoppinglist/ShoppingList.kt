@@ -1,5 +1,6 @@
 package com.example.shoppinglist
 
+import android.text.style.UnderlineSpan
 import android.widget.Space
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
@@ -42,6 +46,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ShoppingList(){
     // Create a list of items
+    // Here using list of because we are not going to change the list as mutableStateOf requires a mutable list or mutable variable to trigger recomposition
     var sItems by remember{ mutableStateOf(listOf<ShoppingItems>()) }
     var showDialog by remember{ mutableStateOf(false) }
     var itemName by remember{ mutableStateOf("") }
@@ -68,7 +73,24 @@ fun ShoppingList(){
 
             items(sItems){
                 item ->
+                if(item.isEditing){
+                    ShoppingItemEditor(item = item, onEditComplete = {
+                        editedName , editedQunatity ->
+                        sItems = sItems.map{it.copy(isEditing = false)}
+                        val editedItem = sItems.find { it.id == item.id }
+                        editedItem?.let {
+                            it.name = editedName
+                            it.quantity =editedQunatity
+                        }
+                    })
+                }
+                else{
+                    ShoppingListItems(item = item,
+                        onEditClick = {sItems = sItems.map{it.copy(isEditing = it.id == item.id)} },
+                        onDeleteClick = { sItems = sItems - item }
 
+                    )
+                }
                 
 
 
@@ -156,7 +178,7 @@ fun ShoppingListItems(
             .padding(8.dp)
             .fillMaxWidth()
             .border(
-                border = BorderStroke(2.dp, Color.White),
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface),
                 shape = RoundedCornerShape(20)
             ),
         verticalAlignment = Alignment.CenterVertically,
@@ -184,7 +206,7 @@ fun ShoppingItemEditor(item : ShoppingItems , onEditComplete: (String , Int) -> 
 
     Row(modifier = Modifier
         .fillMaxWidth()
-        .background(Color.White)
+
         .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
         )
@@ -199,10 +221,11 @@ fun ShoppingItemEditor(item : ShoppingItems , onEditComplete: (String , Int) -> 
                 singleLine = true,
                 modifier = Modifier
                     .wrapContentSize()
-                    .padding(8.dp)
-                ) {
+                    .padding(8.dp),
+                textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface , textDecoration = TextDecoration.Underline)
+                )
 
-            }
+
 
             BasicTextField(
                 value = editedQuantity,
@@ -213,9 +236,9 @@ fun ShoppingItemEditor(item : ShoppingItems , onEditComplete: (String , Int) -> 
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(8.dp)
-            ) {
+            )
 
-            }
+
         }
 
         Button(onClick = {
